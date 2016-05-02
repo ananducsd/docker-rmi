@@ -1,70 +1,10 @@
 Trying to connect to server
 Sent value 0
-java.lang.reflect.UndeclaredThrowableException
-	at com.sun.proxy.$Proxy0.ping(Unknown Source)
-	at PingPongClient.connectToServer(PingPongClient.java:41)
-	at PingPongClient.main(PingPongClient.java:77)
-Caused by: java.net.ConnectException: Connection refused
-	at java.net.PlainSocketImpl.socketConnect(Native Method)
-	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:339)
-	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:198)
-	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:182)
-	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
-	at java.net.Socket.connect(Socket.java:579)
-	at java.net.Socket.connect(Socket.java:528)
-	at java.net.Socket.<init>(Socket.java:425)
-	at java.net.Socket.<init>(Socket.java:208)
-	at rmi.StubInvocationHandler.invoke(StubInvocationHandler.java:82)
-	... 3 more
+Received value Pong 0
 Sent value 1
-java.lang.reflect.UndeclaredThrowableException
-	at com.sun.proxy.$Proxy0.ping(Unknown Source)
-	at PingPongClient.connectToServer(PingPongClient.java:41)
-	at PingPongClient.main(PingPongClient.java:77)
-Caused by: java.net.ConnectException: Connection refused
-	at java.net.PlainSocketImpl.socketConnect(Native Method)
-	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:339)
-	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:198)
-	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:182)
-	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
-	at java.net.Socket.connect(Socket.java:579)
-	at java.net.Socket.connect(Socket.java:528)
-	at java.net.Socket.<init>(Socket.java:425)
-	at java.net.Socket.<init>(Socket.java:208)
-	at rmi.StubInvocationHandler.invoke(StubInvocationHandler.java:82)
-	... 3 more
+Received value Pong 1
 Sent value 2
-java.lang.reflect.UndeclaredThrowableException
-	at com.sun.proxy.$Proxy0.ping(Unknown Source)
-	at PingPongClient.connectToServer(PingPongClient.java:41)
-	at PingPongClient.main(PingPongClient.java:77)
-Caused by: java.net.ConnectException: Connection refused
-	at java.net.PlainSocketImpl.socketConnect(Native Method)
-	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:339)
-	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:198)
-	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:182)
-	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
-	at java.net.Socket.connect(Socket.java:579)
-	at java.net.Socket.connect(Socket.java:528)
-	at java.net.Socket.<init>(Socket.java:425)
-	at java.net.Socket.<init>(Socket.java:208)
-	at rmi.StubInvocationHandler.invoke(StubInvocationHandler.java:82)
-	... 3 more
+Received value Pong 2
 Sent value 3
-java.lang.reflect.UndeclaredThrowableException
-	at com.sun.proxy.$Proxy0.ping(Unknown Source)
-	at PingPongClient.connectToServer(PingPongClient.java:41)
-	at PingPongClient.main(PingPongClient.java:77)
-Caused by: java.net.ConnectException: Connection refused
-	at java.net.PlainSocketImpl.socketConnect(Native Method)
-	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:339)
-	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:198)
-	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:182)
-	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
-	at java.net.Socket.connect(Socket.java:579)
-	at java.net.Socket.connect(Socket.java:528)
-	at java.net.Socket.<init>(Socket.java:425)
-	at java.net.Socket.<init>(Socket.java:208)
-	at rmi.StubInvocationHandler.invoke(StubInvocationHandler.java:82)
-	... 3 more
-4 tests completed,4 tests failed
+Received value Pong 3
+4 tests completed,0 tests failed

@@ -69,7 +69,7 @@ public class PingPongServerFactory {
         		
         		
         		// creating client stub
-        		PingPongInterface client = Stub.create(PingPongInterface.class, skeleton);
+        		PingPongInterface client = Stub.create(PingPongInterface.class, skeleton, "server");
         		out.writeObject(client);
                 
             } catch (IOException e) {

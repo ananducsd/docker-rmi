@@ -11,7 +11,7 @@ docker network rm mynetwork
 # docker rmi dsuser/datavolume:v1
 
 echo 'build images'
-# docker build -t dsuser/basic:v1 -f Dockerfile-basic .
+docker build -t dsuser/basic:v1 -f Dockerfile-basic .
 
 docker network create -d bridge mynetwork
 
