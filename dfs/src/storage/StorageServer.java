@@ -1,5 +1,6 @@
 package storage;
 
+<<<<<<< HEAD
 import java.io.*;
 import java.net.*;
 import java.util.Arrays;
@@ -7,6 +8,23 @@ import java.util.Arrays;
 import common.*;
 import rmi.*;
 import naming.*;
+=======
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+
+import common.Path;
+import naming.Registration;
+import rmi.RMIException;
+import rmi.Skeleton;
+import rmi.Stub;
+>>>>>>> 9e500344ae1669c82cf1d18f0a558bb06dc1a815
 
 /** Storage server.
 
@@ -49,14 +67,22 @@ public class StorageServer implements Storage, Command
             addrStorage = new InetSocketAddress(client_port);
             storage = new Skeleton<Storage>(Storage.class, this, addrStorage);
         } else {
+<<<<<<< HEAD
             storage = new Skeleton<Storage>(Storage.class, this);
+=======
+        	storage = new Skeleton<Storage>(Storage.class, this);
+>>>>>>> 9e500344ae1669c82cf1d18f0a558bb06dc1a815
         }
 
         if(command_port > 0) {
             addrCommand = new InetSocketAddress(command_port);
             command = new Skeleton<Command>(Command.class, this, addrCommand);
         } else {
+<<<<<<< HEAD
             command = new Skeleton<Command>(Command.class, this);
+=======
+        	command = new Skeleton<Command>(Command.class, this);
+>>>>>>> 9e500344ae1669c82cf1d18f0a558bb06dc1a815
         }
 
     }
