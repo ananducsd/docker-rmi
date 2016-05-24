@@ -1,12 +1,15 @@
 package naming;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.FileNotFoundException;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-import rmi.*;
-import common.*;
-import storage.*;
+import common.Path;
+import rmi.RMIException;
+import rmi.Skeleton;
+import storage.Command;
+import storage.Storage;
 
 /** Naming server.
 
@@ -38,9 +41,17 @@ public class NamingServer implements Service, Registration
         <p>
         The naming server is not started.
      */
+	
+	Skeleton<Service> clientService;
+	Skeleton<Registration> registration; 
+	
+	ConcurrentMap<Path, StorageServerStubs> m = new ConcurrentHashMap<Path, StorageServerStubs>();
+	
     public NamingServer()
     {
-        throw new UnsupportedOperationException("not implemented");
+        // throw new UnsupportedOperationException("not implemented");
+    	clientService = new Skeleton<Service>(Service.class, this);
+    	registration = new Skeleton<Registration>(Registration.class, this);
     }
 
     /** Starts the naming server.
@@ -56,7 +67,9 @@ public class NamingServer implements Service, Registration
      */
     public synchronized void start() throws RMIException
     {
-        throw new UnsupportedOperationException("not implemented");
+        //throw new UnsupportedOperationException("not implemented");
+    	clientService.start();
+    	registration.start();
     }
 
     /** Stops the naming server.
@@ -70,7 +83,9 @@ public class NamingServer implements Service, Registration
      */
     public void stop()
     {
-        throw new UnsupportedOperationException("not implemented");
+        //throw new UnsupportedOperationException("not implemented");
+    	clientService.stop();
+    	registration.stop();
     }
 
     /** Indicates that the server has completely shut down.
@@ -141,6 +156,23 @@ public class NamingServer implements Service, Registration
     public Path[] register(Storage client_stub, Command command_stub,
                            Path[] files)
     {
-        throw new UnsupportedOperationException("not implemented");
+    	
+    	for(Path file: files) {
+    		
+    	}
+    	
+    	return null;
+        //throw new UnsupportedOperationException("not implemented");
+    }
+    
+    private class StorageServerStubs {
+    	public Storage client_stub;
+    	public Command command_stub;
+    }
+    
+    private class Node {
+    	boolean isDirectory;
+    	List<Node> children;
+    	String name;
     }
 }
