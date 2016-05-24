@@ -46,8 +46,8 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
                               || !checkValidPath(component) ) {
             throw new IllegalArgumentException("Malformed Path: Component is invalid.");
         }
-        Iterator<String> it = path.iterator();
         this.path = new ArrayList<String>();
+        Iterator<String> it = path.iterator();
         while (it.hasNext()) {
             this.path.add(it.next());
         }
@@ -80,11 +80,11 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
      */
     public Path(String path)
     {
-        if (path.charAt(0) != '/' ) {
-            throw new IllegalArgumentException("Malformed Path: doesn't begin with '/'");
-        }
         if (path == null || path.length() == 0 ) {
             throw new IllegalArgumentException("Malformed Path: Null or Empty String found");
+        }
+        if (path.charAt(0) != '/' ) {
+            throw new IllegalArgumentException("Malformed Path: doesn't begin with '/'");
         }
 
         this.path = new ArrayList<String>();
@@ -129,7 +129,7 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
             public String next() {
                 if (cur < path.size() )
                     return (path.get(cur++));
-                return "";
+                return new String("");
             }
 
             @Override
@@ -191,12 +191,12 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
 
         // for each file, either recurses on subdirectories or adds file
         for(File f : directory.listFiles()) {
-            Path file = new Path( new Path(new Path(), directory.getName())
+            Path filePath = new Path( new Path(new Path(), directory.getName())
                                 , f.getName());
             if(f.isDirectory()) {
                 listDirectory(f, paths);
             } else if(f.isFile()) {
-                paths.add(file);
+                paths.add(filePath);
             }
         }
     }
