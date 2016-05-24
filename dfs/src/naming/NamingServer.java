@@ -288,6 +288,8 @@ public class NamingServer implements Service, Registration
                            Path[] files)
     {
     	
+    	if(client_stub == null || command_stub == null || files == null) throw new NullPointerException();
+    	
     	List<Path> failedToAdd = new ArrayList<Path>();
     	for(Path file: files) {
     		boolean success = addFileToDFS(file);
