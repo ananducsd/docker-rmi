@@ -171,6 +171,7 @@ public class NamingServer implements Service, Registration
     @Override
     public boolean isDirectory(Path path) throws FileNotFoundException
     {
+    	if(path == null) throw new NullPointerException();
     	try {
 			Node curr = getPathNode(path);
 			return !curr.isFile;
@@ -185,7 +186,7 @@ public class NamingServer implements Service, Registration
     @Override
     public String[] list(Path directory) throws FileNotFoundException
     {
-    	
+    	if(directory == null) throw new NullPointerException();
     	try {
 			Node curr = getPathNode(directory);
 			if(curr.isFile) throw new FileNotFoundException("path does not refer to directory");
@@ -203,9 +204,12 @@ public class NamingServer implements Service, Registration
     public boolean createFile(Path file)
         throws RMIException, FileNotFoundException
     {
+    	if(file == null) throw new NullPointerException();
+    	if(file.isRoot()) return false;
     	try {
 			Node parent = getPathNode(file.parent());
 			
+			if(parent.isFile) throw new FileNotFoundException();
 			if(parent.childMap.containsKey(file.last())) {
 				// Already a directory/file of the same name
 				return false;
@@ -229,9 +233,8 @@ public class NamingServer implements Service, Registration
 		} catch (RMIException e) {
 			throw e;
 		} catch (Exception e) {
-			return false;
+			throw e;
 		}
-    	
     	
         // throw new UnsupportedOperationException("not implemented");
     }
@@ -239,9 +242,12 @@ public class NamingServer implements Service, Registration
     @Override
     public boolean createDirectory(Path directory) throws FileNotFoundException, RMIException
     {
+    	if(directory == null) throw new NullPointerException();
+    	if(directory.isRoot()) return false;
 		try {
 			Node parent = getPathNode(directory.parent());
 			
+			if(parent.isFile) throw new FileNotFoundException();
 			if(parent.childMap.containsKey(directory.last())) {
 				// Already a directory/file of the same name
 				return false;
@@ -259,7 +265,7 @@ public class NamingServer implements Service, Registration
 		} catch (RMIException e) {
 			throw e;
 		} catch (Exception e) {
-			return false;
+			throw e;
 		}
 
 		return true;
@@ -332,6 +338,7 @@ public class NamingServer implements Service, Registration
     	storageServers.add(storageServerStubs);
     	List<Path> failedToAdd = new ArrayList<Path>();
     	for(Path file: files) {
+    		if(file.isRoot()) continue;
     		boolean success = addFileToDFS(file);
     		if(!success) {
     			failedToAdd.add(file);
@@ -423,6 +430,41 @@ public class NamingServer implements Service, Registration
 			super();
 			this.client_stub = client_stub;
 			this.command_stub = command_stub;
+		}
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getOuterType().hashCode();
+			result = prime * result + ((client_stub == null) ? 0 : client_stub.hashCode());
+			result = prime * result + ((command_stub == null) ? 0 : command_stub.hashCode());
+			return result;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			StorageServerStubs other = (StorageServerStubs) obj;
+			if (!getOuterType().equals(other.getOuterType()))
+				return false;
+			if (client_stub == null) {
+				if (other.client_stub != null)
+					return false;
+			} else if (!client_stub.equals(other.client_stub))
+				return false;
+			if (command_stub == null) {
+				if (other.command_stub != null)
+					return false;
+			} else if (!command_stub.equals(other.command_stub))
+				return false;
+			return true;
+		}
+		private NamingServer getOuterType() {
+			return NamingServer.this;
 		}
 		
 		
