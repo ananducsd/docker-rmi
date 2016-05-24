@@ -331,7 +331,7 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
 	public static void listDirectory (File root, File directory, List<Path> paths) 
 	                                                    throws FileNotFoundException 
 	{
-    	String relativePath = Paths.get(root.getPath()).relativize(Paths.get(directory.getPath())).toString();
+    	String relativePath = Paths.get(root.getPath()).relativize(Paths.get(directory.getPath())).toString().replace('\\', '/');
 	
 	    if (directory == null || !directory.exists() )
 	        throw new FileNotFoundException("Directory is null or doesn't exist");

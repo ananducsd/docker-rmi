@@ -186,6 +186,9 @@ public class StorageServer implements Storage, Command
         InputStream reader = new FileInputStream(f);
         byte[] output = new byte[length];
         reader.read(output, (int) offset, length);
+        
+        reader.close();
+        
         return output;    
     }
 
@@ -217,6 +220,9 @@ public class StorageServer implements Storage, Command
             }
         }
         writer.write(data);
+        
+        reader.close();
+        writer.close();
     }
 
     // The following methods are documented in Command.java.
@@ -249,7 +255,15 @@ public class StorageServer implements Storage, Command
         if(f.isDirectory()) {
             return deleteDirectory(f);
         } else {
-            return f.delete();
+        	
+        	
+            boolean isDelete = false;
+			try {
+				isDelete = f.delete();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+            return isDelete;
         }        
     }
 
@@ -270,8 +284,6 @@ public class StorageServer implements Storage, Command
         throws RMIException, FileNotFoundException, IOException
     {
     	
-       
-    	
        if (file == null || server == null)
             throw new NullPointerException("Illegal / Null arguments provided");
        
@@ -279,7 +291,7 @@ public class StorageServer implements Storage, Command
         
        	File f = file.toFile(root);
         if (f.exists()) {
-            delete(file);
+           delete(file);
         }
         
 		if (!create(file)) {
