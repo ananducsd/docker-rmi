@@ -374,7 +374,7 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
         String result = "/";
         if (this.path.size() != 0) {
         	int i =0;
-            for (i = 0; i < this.path.size(); i++) {
+            for (i = 0; i < this.path.size()-1 ; i++) {
                 result += this.path.get(i) + "/" ;
             }
             result += this.path.get(i) ;
