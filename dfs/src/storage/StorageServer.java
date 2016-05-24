@@ -2,6 +2,7 @@ package storage;
 
 import java.io.*;
 import java.net.*;
+import java.util.Arrays;
 
 import common.*;
 import rmi.*;
@@ -48,14 +49,14 @@ public class StorageServer implements Storage, Command
             addrStorage = new InetSocketAddress(client_port);
             storage = new Skeleton<Storage>(Storage.class, this, addrStorage);
         } else {
-            clientSkeleton = new Skeleton<Storage>(Storage.class, this);
+            storage = new Skeleton<Storage>(Storage.class, this);
         }
 
         if(command_port > 0) {
             addrCommand = new InetSocketAddress(command_port);
             command = new Skeleton<Command>(Command.class, this, addrCommand);
         } else {
-            commandSkeleton = new Skeleton<Command>(Command.class, this);
+            command = new Skeleton<Command>(Command.class, this);
         }
 
     }
@@ -113,7 +114,7 @@ public class StorageServer implements Storage, Command
         // Storage Server startup  deletes all duplicate files on server.
         for(Path p : serverFiles) {
             p.toFile(root).delete();
-            File parent = new File(p.toFile(root).getParent()));
+            File parent = new File(p.toFile(root).getParent());
             
             while(!parent.equals(root)) {
                 if(parent.list().length == 0) {
