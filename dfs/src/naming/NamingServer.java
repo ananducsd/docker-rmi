@@ -99,12 +99,7 @@ public class NamingServer implements Service, Registration
     	try {
 			clientService.start();
 			registration.start();
-
-			/*try {
-				Thread.sleep(300);
-			} catch (InterruptedException e) {
-				throw new RMIException("Interrupted while waiting for server to start up");
-			}*/
+			
 		} catch (Exception e) {
 			System.out.println("Didn't start");
 			e.printStackTrace();
@@ -158,13 +153,43 @@ public class NamingServer implements Service, Registration
     @Override
     public void lock(Path path, boolean exclusive) throws FileNotFoundException
     {
+        if(path == null) throw new NullPointerException();
+        List<Node> pathNodes = getPathNodes(path);
         
-    	// throw new UnsupportedOperationException("not implemented");
+        for(int i = 0; i < pathNodes.size() - 1; i++) {
+        	pathNodes.get(i).lock.readLock().lock();
+        }
+        
+        Node pathNode = pathNodes.get(pathNodes.size() - 1);
+    	if(!exclusive) {
+    		pathNode.lock.readLock().lock();
+    	} else {
+    		pathNode.lock.writeLock().lock();
+    	}
     }
 
     @Override
     public void unlock(Path path, boolean exclusive)
     {
+    	if(path == null) throw new NullPointerException();
+    	
+    	List<Node> pathNodes;
+		try {
+			pathNodes = getPathNodes(path);
+		} catch (FileNotFoundException e) {
+			throw new IllegalArgumentException();
+		}
+        
+		for(int i = 0; i < pathNodes.size() - 1; i++) {
+        	pathNodes.get(i).lock.readLock().lock();
+        }
+        
+        Node pathNode = pathNodes.get(pathNodes.size() - 1);
+    	if(!exclusive) {
+    		pathNode.lock.readLock().unlock();
+    	} else {
+    		pathNode.lock.writeLock().unlock();
+    	}
         // throw new UnsupportedOperationException("not implemented");
     }
 
@@ -402,12 +427,21 @@ public class NamingServer implements Service, Registration
     	
     }    
     
-    
     private Node getPathNode(Path path) throws FileNotFoundException{
+    	List<Node> pathNodes = getPathNodes(path);
+    	Node pathNode = pathNodes.get(pathNodes.size() - 1);
+    	return pathNode;
+    }
+    
+    private List<Node> getPathNodes(Path path) throws FileNotFoundException{
     	
     	List<String> pathItems = path.pathItems;
     	
+    	
     	Node curr = root;
+    	
+    	List<Node> res = new ArrayList<Node>();
+    	res.add(curr);
     	
     	for(int i = 0; i < pathItems.size(); i++) {
 			String elem = pathItems.get(i);
@@ -416,9 +450,10 @@ public class NamingServer implements Service, Registration
 				throw new FileNotFoundException();
 			}
 			curr = curr.childMap.get(elem);
+			res.add(curr);
 		}
     	
-    	return curr;
+    	return res;
     }
     
     private class StorageServerStubs {
