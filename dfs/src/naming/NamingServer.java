@@ -151,25 +151,29 @@ public class NamingServer implements Service, Registration
 
     // The following public methods are documented in Service.java.
     @Override
-    public void lock(Path path, boolean exclusive) throws FileNotFoundException
+    public void lock(Path path, boolean exclusive) throws FileNotFoundException, RMIException
     {
         if(path == null) throw new NullPointerException();
         List<Node> pathNodes = getPathNodes(path);
         
-        for(int i = 0; i < pathNodes.size() - 1; i++) {
-        	pathNodes.get(i).lock.readLock().lock();
-        }
-        
-        Node pathNode = pathNodes.get(pathNodes.size() - 1);
-    	if(!exclusive) {
-    		pathNode.lock.readLock().lock();
-    	} else {
-    		pathNode.lock.writeLock().lock();
-    	}
+        try {
+			for(int i = 0; i < pathNodes.size() - 1; i++) {
+				pathNodes.get(i).lock.lockRead();;
+			}
+			
+			Node pathNode = pathNodes.get(pathNodes.size() - 1);
+			if(!exclusive) {
+				pathNode.lock.lockRead();;
+			} else {
+				pathNode.lock.lockWrite();
+			}
+		} catch (InterruptedException e) {
+			
+		}
     }
 
     @Override
-    public void unlock(Path path, boolean exclusive)
+    public void unlock(Path path, boolean exclusive) throws RMIException
     {
     	if(path == null) throw new NullPointerException();
     	
@@ -181,14 +185,18 @@ public class NamingServer implements Service, Registration
 		}
         
 		for(int i = 0; i < pathNodes.size() - 1; i++) {
-        	pathNodes.get(i).lock.readLock().lock();
+        	pathNodes.get(i).lock.unlockRead();;
         }
         
         Node pathNode = pathNodes.get(pathNodes.size() - 1);
     	if(!exclusive) {
-    		pathNode.lock.readLock().unlock();
+    		pathNode.lock.unlockRead();;
     	} else {
-    		pathNode.lock.writeLock().unlock();
+    		try {
+				pathNode.lock.unlockWrite();
+			} catch (InterruptedException e) {
+				throw new RMIException(e);
+			}
     	}
         // throw new UnsupportedOperationException("not implemented");
     }
@@ -507,7 +515,7 @@ public class NamingServer implements Service, Registration
     	boolean isFile;
     	Map<String, Node> childMap;
     	String name;
-    	ReadWriteLock lock;
+    	CustomReadWriteLock lock;
     	
     	public Node(String name, boolean isFile){
     		this.name = name;
@@ -515,7 +523,7 @@ public class NamingServer implements Service, Registration
     		if(!isFile) {
     			childMap = new HashMap<String, Node>();
     		}
-    		lock = new ReentrantReadWriteLock(true);
+    		lock = new CustomReadWriteLock();
     	}
     }
     
