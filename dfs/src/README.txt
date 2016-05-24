@@ -12,8 +12,8 @@ PID 	: A53081794
 Email 	: a3anand@cs.ucsd.edu
 
 Name	: Siddhant Arya
-PID 	: 
-Email	:
+PID 	: A53079389
+Email	: sarya@eng.ucsd.edu
 
 ------------------------------------------------------------------------------------
 
