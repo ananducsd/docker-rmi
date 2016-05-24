@@ -280,10 +280,10 @@ public class StorageServer implements Storage, Command
         if (f.exists()) {
             delete(file);
         }
-
-        if (!create(file)) {
-            throw new IOException("Error creating file");
-        }
+        create(file);
+//        if (!create(file)) {
+//            throw new IOException("Error creating file");
+//        }
 
         long size = server.size(file);
 

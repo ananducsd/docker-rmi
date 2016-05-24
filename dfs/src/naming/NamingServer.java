@@ -1,6 +1,7 @@
 package naming;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,15 +13,12 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import common.Path;
 import rmi.RMIException;
 import rmi.Skeleton;
 import storage.Command;
 import storage.Storage;
-import test.TestFailed;
 
 /** Naming server.
 
@@ -65,9 +63,9 @@ public class NamingServer implements Service, Registration
 	private boolean service_stopped = false;
 	private boolean register_stopped = false;
 	
-	Set<StorageServerStubs> storageServers = new HashSet<StorageServerStubs>();
+	Set<StorageServerStubs> allStorageServers = new HashSet<StorageServerStubs>();
 	
-	ConcurrentMap<Path, List<StorageServerStubs>> m = new ConcurrentHashMap<Path, List<StorageServerStubs>>();
+	ConcurrentMap<Path, Set<StorageServerStubs>> m = new ConcurrentHashMap<Path, Set<StorageServerStubs>>();
 	Node root;
 	
     public NamingServer()
@@ -101,8 +99,7 @@ public class NamingServer implements Service, Registration
 			registration.start();
 			
 		} catch (Exception e) {
-			System.out.println("Didn't start");
-			e.printStackTrace();
+			throw new RMIException(e);
 		}
     }
 
@@ -163,16 +160,33 @@ public class NamingServer implements Service, Registration
 			
 			Node pathNode = pathNodes.get(pathNodes.size() - 1);
 			if(!exclusive) {
-				pathNode.lock.lockRead();;
+				pathNode.lock.lockRead();
+				
+				if(pathNode.isFile) {
+					// update read count on file
+					pathNode.num_reads++;
+					if(pathNode.num_reads == 20) {
+						pathNode.num_reads = 0;
+						// replicate file
+						replicate(path);
+					}
+				}
 			} else {
 				pathNode.lock.lockWrite();
+				
+				// delete other copies
+				deleteAllExtraCopies(path);
+				
 			}
 		} catch (InterruptedException e) {
-			
+			throw new RMIException(e);
+		} catch (IOException e) {
+			throw new RMIException(e);
 		}
     }
 
-    @Override
+
+	@Override
     public void unlock(Path path, boolean exclusive) throws RMIException
     {
     	if(path == null) throw new NullPointerException();
@@ -247,8 +261,8 @@ public class NamingServer implements Service, Registration
 				// Already a directory/file of the same name
 				return false;
 			}
-			int i = rand.nextInt(storageServers.size());
-			Iterator<StorageServerStubs> iter = storageServers.iterator();
+			int i = rand.nextInt(allStorageServers.size());
+			Iterator<StorageServerStubs> iter = allStorageServers.iterator();
 			for (int j = 0; j < i; iter.next());
 			StorageServerStubs stubs = iter.next();
 			stubs.command_stub.create(file);
@@ -257,7 +271,7 @@ public class NamingServer implements Service, Registration
 			parent.childMap.put(file.last(), new Node(file.last(), true));
 			
 			// add to map
-			m.putIfAbsent(file, new ArrayList<StorageServerStubs>());
+			m.putIfAbsent(file, new HashSet<StorageServerStubs>());
 			m.get(file).add(stubs);
 			
 			return true;
@@ -307,6 +321,9 @@ public class NamingServer implements Service, Registration
     @Override
     public boolean delete(Path path) throws RMIException, FileNotFoundException
     {
+    	if(path == null) throw new NullPointerException();
+    	if(path.isRoot()) return false;
+    	
     	try {
 			List<String> pathItems = path.pathItems;
 			
@@ -336,7 +353,7 @@ public class NamingServer implements Service, Registration
 		} catch(RMIException e) {
 			throw e;
 		} catch (Exception e) {
-			return false;
+			throw e;
 		}
     	
     	return true;
@@ -347,10 +364,9 @@ public class NamingServer implements Service, Registration
     public Storage getStorage(Path file) throws FileNotFoundException
     {
     	
-    	List<StorageServerStubs> stubs = m.get(file);
+    	Set<StorageServerStubs> stubs = m.get(file);
     	if(stubs == null) throw new FileNotFoundException();
-    	int i = rand.nextInt(stubs.size());
-    	return stubs.get(i).client_stub;
+    	return getRandomElement(stubs).client_stub;
         //throw new UnsupportedOperationException("not implemented");
     }
 
@@ -364,9 +380,9 @@ public class NamingServer implements Service, Registration
     	if(client_stub == null || command_stub == null || files == null) throw new NullPointerException();
     	
     	StorageServerStubs storageServerStubs = new StorageServerStubs(client_stub, command_stub);
-    	if(storageServers.contains(storageServerStubs)) throw new IllegalStateException();
+    	if(allStorageServers.contains(storageServerStubs)) throw new IllegalStateException();
     	
-    	storageServers.add(storageServerStubs);
+    	allStorageServers.add(storageServerStubs);
     	List<Path> failedToAdd = new ArrayList<Path>();
     	for(Path file: files) {
     		if(file.isRoot()) continue;
@@ -375,7 +391,7 @@ public class NamingServer implements Service, Registration
     			failedToAdd.add(file);
     		}
     		else {
-    			m.putIfAbsent(file, new ArrayList<StorageServerStubs>());
+    			m.putIfAbsent(file, new HashSet<StorageServerStubs>());
     			m.get(file).add(storageServerStubs);
     		}
     	}
@@ -464,6 +480,41 @@ public class NamingServer implements Service, Registration
     	return res;
     }
     
+    private boolean replicate(Path path) throws FileNotFoundException, RMIException, IOException {
+		Set<StorageServerStubs> currStorageStubs = m.get(path);
+		Set<StorageServerStubs> diff = new HashSet<StorageServerStubs>(allStorageServers);
+		diff.removeAll(currStorageStubs);
+		
+		if(diff.isEmpty()) return false;
+		StorageServerStubs sourceServer = getRandomElement(currStorageStubs);
+		StorageServerStubs targetServer = getRandomElement(diff);
+		boolean copySuccess = targetServer.command_stub.copy(path, sourceServer.client_stub);
+		if(copySuccess) {
+			m.putIfAbsent(path, new HashSet<StorageServerStubs>());
+			m.get(path).add(targetServer);
+		}
+		return copySuccess;
+	}
+    
+    private void deleteAllExtraCopies(Path path) throws RMIException {
+    	Set<StorageServerStubs> currStorageStubs = m.get(path);
+    	if(currStorageStubs == null) return;
+    	StorageServerStubs remainingServer = getRandomElement(currStorageStubs);
+    	Set<StorageServerStubs> diff = new HashSet<StorageServerStubs>(allStorageServers);
+    	diff.remove(remainingServer);
+    	
+    	for(StorageServerStubs storageStub : diff) {
+    		storageStub.command_stub.delete(path);
+    		m.get(path).remove(storageStub);
+    	}
+    }
+    private <E> E getRandomElement(Set<E> t) {
+    	int j = rand.nextInt(t.size());
+    	Iterator iter = t.iterator();
+    	for(int i = 0; i < j; i++) iter.next();
+    	return (E) iter.next();
+    }
+    
     private class StorageServerStubs {
     	public Storage client_stub;
     	public Command command_stub;
@@ -513,6 +564,7 @@ public class NamingServer implements Service, Registration
     
     private class Node {
     	boolean isFile;
+    	int num_reads;
     	Map<String, Node> childMap;
     	String name;
     	CustomReadWriteLock lock;
