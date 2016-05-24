@@ -1,9 +1,8 @@
 package naming;
 
 import java.io.FileNotFoundException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -21,6 +20,7 @@ import rmi.RMIException;
 import rmi.Skeleton;
 import storage.Command;
 import storage.Storage;
+import test.TestFailed;
 
 /** Naming server.
 
@@ -56,6 +56,9 @@ public class NamingServer implements Service, Registration
 	Skeleton<Service> clientService;
 	Skeleton<Registration> registration; 
 	
+	
+	InetSocketAddress serviceAddr, registerAddr;
+	
 	Random rand = new Random();
 	
 	Set<StorageServerStubs> storageServers = new HashSet<StorageServerStubs>();
@@ -66,8 +69,11 @@ public class NamingServer implements Service, Registration
     public NamingServer()
     {
         // throw new UnsupportedOperationException("not implemented");
-    	clientService = new Skeleton<Service>(Service.class, this);
-    	registration = new Skeleton<Registration>(Registration.class, this);
+    	serviceAddr = new InetSocketAddress(NamingStubs.SERVICE_PORT);
+    	registerAddr = new InetSocketAddress(NamingStubs.REGISTRATION_PORT); 
+    	
+    	clientService = new ServiceSkeleton();
+    	registration = new RegistrationSkeleton();
     	
     	root = new Node("/", false);
     }
@@ -86,8 +92,20 @@ public class NamingServer implements Service, Registration
     public synchronized void start() throws RMIException
     {
         //throw new UnsupportedOperationException("not implemented");
-    	clientService.start();
-    	registration.start();
+    	try {
+			clientService.start();
+			registration.start();
+			
+			
+			try {
+				Thread.sleep(300);
+			} catch (InterruptedException e) {
+				throw new RMIException("Interrupted while waiting for server to start up");
+			}
+		} catch (Exception e) {
+			System.out.println("Didn't start");
+			e.printStackTrace();
+		}
     }
 
     /** Stops the naming server.
@@ -236,7 +254,7 @@ public class NamingServer implements Service, Registration
     public boolean delete(Path path) throws RMIException, FileNotFoundException
     {
     	try {
-			List<String> pathItems = path.path;
+			List<String> pathItems = path.pathItems;
 			
 			if(path.isRoot()) throw new IllegalArgumentException("Root cannot be deleted");
 			Node parent = getPathNode(path.parent());
@@ -332,7 +350,7 @@ public class NamingServer implements Service, Registration
    
     private boolean addFileToDFS(Path file) {
     	
-    	List<String> pathItems = file.path;
+    	List<String> pathItems = file.pathItems;
     	
     	Node curr = root;
     	for(int i = 0; i < pathItems.size() - 1; i++) {
@@ -359,7 +377,7 @@ public class NamingServer implements Service, Registration
     
     private Node getPathNode(Path path) throws FileNotFoundException{
     	
-    	List<String> pathItems = path.path;
+    	List<String> pathItems = path.pathItems;
     	
     	Node curr = root;
     	
@@ -399,5 +417,47 @@ public class NamingServer implements Service, Registration
     		}
     		lock = new ReentrantReadWriteLock(true);
     	}
+    }
+    
+    private class RegistrationSkeleton extends Skeleton<Registration>
+    {
+        /** Creates the skeleton. */
+    	RegistrationSkeleton()
+        {
+    		super(Registration.class, NamingServer.this, NamingServer.this.registerAddr);
+        }
+
+        /** Sets the <code>stopped</code> flag and wakes any thread waiting in
+            the server's <code>stop</code> method. */
+        @Override
+        protected void stopped(Throwable cause)
+        {
+            synchronized(NamingServer.this)
+            {
+                NamingServer.this.notifyAll();
+            }
+        }
+        
+    }
+    
+    private class ServiceSkeleton extends Skeleton<Service>
+    {
+        /** Creates the skeleton. */
+    	ServiceSkeleton()
+        {
+    		super(Service.class, NamingServer.this, NamingServer.this.serviceAddr);
+        }
+
+        /** Sets the <code>stopped</code> flag and wakes any thread waiting in
+            the server's <code>stop</code> method. */
+        @Override
+        protected void stopped(Throwable cause)
+        {
+            synchronized(NamingServer.this)
+            {
+                NamingServer.this.notifyAll();
+            }
+        }
+        
     }
 }

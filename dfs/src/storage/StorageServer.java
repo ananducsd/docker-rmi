@@ -1,13 +1,6 @@
 package storage;
 
-import java.io.*;
-import java.net.*;
-import java.util.Arrays;
-
-import common.*;
-import rmi.*;
-import naming.*;
-
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -120,6 +113,8 @@ public class StorageServer implements Storage, Command
         }
         storage.start();
         command.start();
+        
+        // Wait for it to start?
 
         Path[] serverFiles = naming_server.register(
                 Stub.create(Storage.class, storage, hostname),

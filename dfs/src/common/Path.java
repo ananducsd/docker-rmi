@@ -1,6 +1,7 @@
 package common;
 
 import java.io.*;
+import java.nio.file.Paths;
 import java.util.*;
 
 /** Distributed filesystem paths.
@@ -20,12 +21,14 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
 {
 
     private static final long serialVersionUID = 123123L;
-    public ArrayList<String> path;
+    final public List<String> pathItems;
+    final public String pathString;
 
     /** Creates a new path which represents the root directory. */
     public Path()
     {
-        path = new ArrayList<String> ();
+        pathItems = new ArrayList<String> ();
+        pathString = getPathString();
     }
 
     /** Creates a new path by appending the given component to an existing path.
@@ -42,12 +45,9 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
                               || !checkValidPath(component) ) {
             throw new IllegalArgumentException("Malformed Path: Component is invalid.");
         }
-        this.path = new ArrayList<String>();
-        Iterator<String> it = path.iterator();
-        while (it.hasNext()) {
-            this.path.add(it.next());
-        }
-        this.path.add(component);        
+        pathItems = new ArrayList<String>(path.pathItems);
+        pathItems.add(component);  
+        pathString = getPathString();
     }
 
     /** Creates a new path from a path object.
@@ -56,9 +56,9 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
      *
      * @param components The path in form of ArrayList<String>.
      */
-    public Path(ArrayList<String> components) {
-        this();
-        this.path = components;
+    public Path(List<String> components) {
+        pathItems = new ArrayList<String>(components);
+        pathString = getPathString();
     }
 
 
@@ -81,20 +81,21 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
             throw new IllegalArgumentException("Malformed Path: doesn't begin with '/'");
         }
 
-        this.path = new ArrayList<String>();
+        pathItems = new ArrayList<String>();
         for (String component : path.split("/")) {
-            if (!checkValidPath(component)) {
+            
+        	if (component.length() == 0) {
+                continue;
+            } else if (!checkValidPath(component)) {
                 throw new IllegalArgumentException("Malformed Path: Unexpected /" 
                                                     + " Special characters found in path");
             } 
-            else if (component.length() == 0) {
-                continue;
-            } 
             else {
-                this.path.add(component);
+                pathItems.add(component);
             }
         }
-
+        
+        pathString = this.getPathString();
     }
 
     /** Returns an iterator over the components of the path.
@@ -105,7 +106,7 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
      */
     public Iterator<String> iterator()
     {
-    	final Iterator<String> iter = path.iterator();
+    	final Iterator<String> iter = pathItems.iterator();
         return new Iterator<String>() {
 
             @Override
@@ -124,67 +125,7 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
             }
         };
     }
-    /** Lists the paths of all files in a directory tree on the local
-        filesystem.
-        @param directory The root directory of the directory tree.
-        @return An array of relative paths, one for each file in the directory
-                tree.
-        @throws FileNotFoundException If the root directory does not exist.
-        @throws IllegalArgumentException If <code>directory</code> exists but
-                                         does not refer to a directory.
-     */
-    public static Path[] list(File directory) throws FileNotFoundException
-    {
-        if (directory == null || !directory.exists() )
-            throw new FileNotFoundException("Directory is null or doesn't exist");
-
-        if (!directory.isDirectory())
-            throw new IllegalArgumentException("Given path is not a directory.");
-
-        ArrayList<Path> paths = new ArrayList<Path>();
-        for(File f : directory.listFiles()) {
-
-            Path filePath = new Path(new Path(), f.getName());
-            if(f.isDirectory()) {
-                listDirectory(f, paths);
-            } else if(f.isFile()) {
-                paths.add(filePath);
-            }
-        }
-        return paths.toArray(new Path[0]);        
-    }
-
-    /** Adds the paths of all files in a directory tree recursively 
-     *
-     *  @param directory The root directory of the directory tree.
-     *  @param paths An array of relative paths, upto the directory root.
-     *  @throws FileNotFoundException If the root directory does not exist.
-     *  @throws IllegalArgumentException If <code>directory</code> exists but
-                                         does not refer to a directory.
-     */
-    public static void listDirectory (File directory, ArrayList<Path> paths) 
-                                                        throws FileNotFoundException 
-    {
-
-
-        if (directory == null || !directory.exists() )
-            throw new FileNotFoundException("Directory is null or doesn't exist");
-
-        if (!directory.isDirectory())
-            throw new IllegalArgumentException("Given path is not a directory.");
-
-        // for each file, either recurses on subdirectories or adds file
-        for(File f : directory.listFiles()) {
-            Path filePath = new Path( new Path(new Path(), directory.getName())
-                                , f.getName());
-            if(f.isDirectory()) {
-                listDirectory(f, paths);
-            } else if(f.isFile()) {
-                paths.add(filePath);
-            }
-        }
-    }
-
+    
     /** 
      *   Determines whether the path represents the root directory.
      *   
@@ -193,7 +134,7 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
      */
     public boolean isRoot()
     {
-        return this.path.isEmpty();
+        return pathItems.isEmpty();
     }
 
     /** Returns the path to the parent of this path.
@@ -202,15 +143,14 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
      */
     public Path parent()
     {
-        if(this.isRoot()) {
+        if(isRoot()) {
             throw new IllegalArgumentException("Path represents the root"
                     + "directory and has no parent");
         }
-        if (this.path.size() == 1) {
+        if (pathItems.size() == 1) {
             return new Path();
         }
-        ArrayList<String> parentPath = new ArrayList<String>();
-        parentPath.addAll(this.path);
+        List<String> parentPath = new ArrayList<String>(pathItems);
         parentPath.remove(parentPath.size() - 1);
         return new Path(parentPath);        
     }
@@ -225,7 +165,7 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
     {
         if (this.isRoot())
             throw new IllegalArgumentException("Given path represents the root directory");
-        return this.path.get(this.path.size() - 1);
+        return pathItems.get(pathItems.size() - 1);
     }
 
     /** Determines if the given path is a subpath of this path.
@@ -238,10 +178,13 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
      */
     public boolean isSubpath(Path other)
     {
+    	return this.pathString.startsWith(other.pathString);
+    	
+    	/*
         Iterator<String>  itOrig  = this.iterator();
         Iterator<String>  itOther = other.iterator();
 
-        if(other.path.size() > this.path.size()) {
+        if(other.pathItems.size() > this.pathItems.size()) {
             return false;
         }
 
@@ -250,7 +193,7 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
                 return false;
             }
         }
-        return true;
+        return true;*/
     }
 
     /** Converts the path to <code>File</code> object.
@@ -299,12 +242,16 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
     @Override
     public int compareTo(Path other)
     {
-        if (this.equals(other) || this.path.isEmpty() && other.path.isEmpty() )
+    	
+    	return this.toString().compareTo(other.toString());
+    	
+        /*if (this.equals(other) || this.pathItems.isEmpty() && other.pathItems.isEmpty() )
+    	if(this.equals(other))
             return 0;
         else if ( this.isSubpath(other))
             return 1;
         else 
-            return -1;
+            return -1;*/
     }
 
     /** Compares two paths for equality.
@@ -323,16 +270,31 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
     @Override
     public int hashCode()
     {
-        int hash = 0;
+    	return this.toString().hashCode();
+    	
+        /* int hash = 0;
         int prime = 23;
 
-        for(String component : this.path) {
+        for(String component : this.pathItems) {
             hash += prime * component.hashCode();
             prime *= 23;
         }
-        return hash;
+        return hash;*/
     }
-
+    
+    public String getPathString() {
+    	StringBuffer result = new StringBuffer("/");
+        if (pathItems.size() != 0) {
+        	int i =0;
+            for (i = 0; i < pathItems.size()-1 ; i++) {
+                result.append(pathItems.get(i));
+                result.append("/") ;
+            }
+            result.append(pathItems.get(i)) ;
+        }
+        return result.toString();
+    }
+    
     /** Converts the path to a string.
         <p>
         The string may later be used as an argument to the
@@ -340,17 +302,8 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
         @return The string representation of the path.
      */
     @Override
-    public String toString()
-    {
-        String result = "/";
-        if (this.path.size() != 0) {
-        	int i =0;
-            for (i = 0; i < this.path.size()-1 ; i++) {
-                result += this.path.get(i) + "/" ;
-            }
-            result += this.path.get(i) ;
-        }
-        return result;
+    public String toString(){
+        return pathString;
     }
 
     /** 
@@ -364,12 +317,73 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
      *         
      */
     boolean checkValidPath (String path) {
-        for (char c : path.toCharArray()) {
-            if (c == '/' || c == ':') {
-                return false;
-            }
-        }
-        return true;
+        return !(path.contains("/") || path.contains(":"));
     }
+
+	/** Adds the paths of all files in a directory tree recursively 
+	 *
+	 *  @param directory The root directory of the directory tree.
+	 *  @param paths An array of relative paths, upto the directory root.
+	 *  @throws FileNotFoundException If the root directory does not exist.
+	 *  @throws IllegalArgumentException If <code>directory</code> exists but
+	                                     does not refer to a directory.
+	 */
+	public static void listDirectory (File root, File directory, List<Path> paths) 
+	                                                    throws FileNotFoundException 
+	{
+    	String relativePath = Paths.get(root.getPath()).relativize(Paths.get(directory.getPath())).toString();
+	
+	    if (directory == null || !directory.exists() )
+	        throw new FileNotFoundException("Directory is null or doesn't exist");
+	
+	    if (!directory.isDirectory())
+	        throw new IllegalArgumentException("Given path is not a directory.");
+	
+	    // for each file, either recurses on subdirectories or adds file
+	    for(File f : directory.listFiles()) {
+	        
+	        if(f.isDirectory()) {
+	            listDirectory(root, f, paths);
+	        } else {
+	        	
+	        	Path p = new Path("/" + relativePath);
+	        	Path filePath = new Path(p, f.getName());
+	        	/*Path filePath = new Path( new Path(new Path(), directory.getName())
+                        , f.getName());*/
+	            paths.add(filePath);
+	        }
+	    }
+	}
+
+	/** Lists the paths of all files in a directory tree on the local
+	    filesystem.
+	    @param directory The root directory of the directory tree.
+	    @return An array of relative paths, one for each file in the directory
+	            tree.
+	    @throws FileNotFoundException If the root directory does not exist.
+	    @throws IllegalArgumentException If <code>directory</code> exists but
+	                                     does not refer to a directory.
+	 */
+	public static Path[] list(File directory) throws FileNotFoundException
+	{
+	    if (directory == null || !directory.exists() )
+	        throw new FileNotFoundException("Directory is null or doesn't exist");
+	
+	    if (!directory.isDirectory())
+	        throw new IllegalArgumentException("Given path is not a directory.");
+	
+	    List<Path> paths = new ArrayList<Path>();
+	    
+	    for(File f : directory.listFiles()) {
+	
+	        if(f.isDirectory()) {
+	            Path.listDirectory(directory, f, paths);
+	        } else {
+	        	Path filePath = new Path(new Path(), f.getName());
+	            paths.add(filePath);
+	        }
+	    }
+	    return paths.toArray(new Path[0]);        
+	}
 
 }
