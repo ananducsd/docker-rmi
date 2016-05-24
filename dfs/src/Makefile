@@ -51,14 +51,14 @@ jar : all-classes
 # Compile all Java files.
 .PHONY : all-classes
 all-classes :
-	javac $(JAVAFILES)
+	javac -cp reference-rmi.jar $(JAVAFILES)
 
 # Run unit and conformance tests.
 .PHONY : test
 test : all-classes
-	java -cp $(UNITCLASSPATH) unit.UnitTests
+	java -cp $(UNITCLASSPATH):reference-rmi.jar unit.UnitTests
 	@echo
-	java conformance.ConformanceTests
+	java -cp .$(CPSEPARATOR)reference-rmi.jar conformance.ConformanceTests
 
 # Delete all intermediate and final output and leave only the source.
 .PHONY : clean
