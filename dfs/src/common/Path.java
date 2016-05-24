@@ -264,7 +264,7 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
             return false;
         }
 
-        while(itOrig.hasNext()) {
+        while(itOther.hasNext()) {
             if(!itOrig.next().equals(itOther.next())) {
                 return false;
             }
@@ -373,9 +373,11 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
     {
         String result = "/";
         if (this.path.size() != 0) {
-            for (int i = 0; i < this.path.size(); i++) {
+        	int i =0;
+            for (i = 0; i < this.path.size(); i++) {
                 result += this.path.get(i) + "/" ;
             }
+            result += this.path.get(i) ;
         }
         return result;
     }
