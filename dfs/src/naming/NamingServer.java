@@ -347,6 +347,11 @@ public class NamingServer implements Service, Registration
 				
 				for(Path filePath: pathsToRemove) m.remove(filePath);
 				for(StorageServerStubs storageStub : storageServers) storageStub.command_stub.delete(path);
+			} else {
+				Set<StorageServerStubs> storageServers = new HashSet<StorageServerStubs>();
+				for(StorageServerStubs storageServer: storageServers) {
+					storageServer.command_stub.delete(path);
+				}
 			}
 			
 			

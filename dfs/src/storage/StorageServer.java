@@ -224,20 +224,16 @@ public class StorageServer implements Storage, Command
     public synchronized boolean create(Path file)
     {
         File f = file.toFile(root);
-        if(file == null) {
-            throw new NullPointerException("File to be created can't be null");
-        }
-
         if (file.isRoot()) {
             return false;
         }
-
         File parent = file.parent().toFile(root);
         parent.mkdirs();
 
         try {
             return f.createNewFile();
         } catch (IOException e) {
+        	e.printStackTrace();
             return false;
         }
     }
@@ -273,19 +269,22 @@ public class StorageServer implements Storage, Command
     public synchronized boolean copy(Path file, Storage server)
         throws RMIException, FileNotFoundException, IOException
     {
+    	
+       
+    	
        if (file == null || server == null)
             throw new NullPointerException("Illegal / Null arguments provided");
-
-        File f = file.toFile(root);
+       
+       	long size = server.size(file);
+        
+       	File f = file.toFile(root);
         if (f.exists()) {
             delete(file);
         }
-        create(file);
-//        if (!create(file)) {
-//            throw new IOException("Error creating file");
-//        }
-
-        long size = server.size(file);
+        
+		if (!create(file)) {
+			throw new IOException("Error creating file");
+		}
 
         int buffsize = 8192; 
         byte[] buffer = new byte[buffsize];
