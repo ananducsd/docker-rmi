@@ -40,7 +40,8 @@ include build/Makefile.separator
 # the Windows Java implementation requires the path separator to be ; but
 # Cygwin's bash interprets this as a separator between commands.
 
-UNITCLASSPATH = ".$(CPSEPARATOR)unit"
+UNITCLASSPATH = ".$(CPSEPARATOR)unit$(CPSEPARATOR)reference-rmi.jar"
+RMICLASSPATH = ".$(CPSEPARATOR)reference-rmi.jar"
 
 # Create the single monolithic jar file.
 .PHONY : jar
@@ -55,10 +56,10 @@ all-classes :
 
 # Run unit and conformance tests.
 .PHONY : test
-test : all-classes
-	java -cp $(UNITCLASSPATH):reference-rmi.jar unit.UnitTests
+test : all-classes 
+	java -cp $(UNITCLASSPATH) unit.UnitTests
 	@echo
-	java -cp .$(CPSEPARATOR)reference-rmi.jar conformance.ConformanceTests
+	java -cp $(RMICLASSPATH) conformance.ConformanceTests
 
 # Delete all intermediate and final output and leave only the source.
 .PHONY : clean
