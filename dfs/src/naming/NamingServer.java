@@ -339,7 +339,7 @@ public class NamingServer implements Service, Registration
 				Set<StorageServerStubs> storageServers = new HashSet<StorageServerStubs>();
 				Set<Path> pathsToRemove = new HashSet<Path>();
 				for(Path filePath : m.keySet()) {
-					if(path.isSubpath(filePath)) {
+					if(filePath.isSubpath(path)) {
 						storageServers.addAll(m.get(filePath));
 						pathsToRemove.add(filePath);
 					}
@@ -348,7 +348,7 @@ public class NamingServer implements Service, Registration
 				for(Path filePath: pathsToRemove) m.remove(filePath);
 				for(StorageServerStubs storageStub : storageServers) storageStub.command_stub.delete(path);
 			} else {
-				Set<StorageServerStubs> storageServers = new HashSet<StorageServerStubs>();
+				Set<StorageServerStubs> storageServers = m.get(path);
 				for(StorageServerStubs storageServer: storageServers) {
 					storageServer.command_stub.delete(path);
 				}
