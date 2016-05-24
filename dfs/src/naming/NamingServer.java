@@ -53,13 +53,17 @@ public class NamingServer implements Service, Registration
         The naming server is not started.
      */
 	
-	Skeleton<Service> clientService;
-	Skeleton<Registration> registration; 
+	ServiceSkeleton clientService;
+	RegistrationSkeleton registration; 
 	
 	
 	InetSocketAddress serviceAddr, registerAddr;
 	
 	Random rand = new Random();
+	
+	private boolean stopped = false;
+	private boolean service_stopped = false;
+	private boolean register_stopped = false;
 	
 	Set<StorageServerStubs> storageServers = new HashSet<StorageServerStubs>();
 	
@@ -95,13 +99,12 @@ public class NamingServer implements Service, Registration
     	try {
 			clientService.start();
 			registration.start();
-			
-			
-			try {
+
+			/*try {
 				Thread.sleep(300);
 			} catch (InterruptedException e) {
 				throw new RMIException("Interrupted while waiting for server to start up");
-			}
+			}*/
 		} catch (Exception e) {
 			System.out.println("Didn't start");
 			e.printStackTrace();
@@ -122,6 +125,20 @@ public class NamingServer implements Service, Registration
         //throw new UnsupportedOperationException("not implemented");
     	clientService.stop();
     	registration.stop();
+    	
+    	// Wait for the skeleton to stop before exiting.
+    	synchronized(this)
+        {
+            while(!stopped)
+            {
+                try
+                {
+                    wait();
+                }
+                catch(InterruptedException e) { }
+            }
+        }
+    	
     }
 
     /** Indicates that the server has completely shut down.
@@ -306,8 +323,13 @@ public class NamingServer implements Service, Registration
                            Path[] files)
     {
     	
+    	
     	if(client_stub == null || command_stub == null || files == null) throw new NullPointerException();
     	
+    	StorageServerStubs storageServerStubs = new StorageServerStubs(client_stub, command_stub);
+    	if(storageServers.contains(storageServerStubs)) throw new IllegalStateException();
+    	
+    	storageServers.add(storageServerStubs);
     	List<Path> failedToAdd = new ArrayList<Path>();
     	for(Path file: files) {
     		boolean success = addFileToDFS(file);
@@ -316,11 +338,12 @@ public class NamingServer implements Service, Registration
     		}
     		else {
     			m.putIfAbsent(file, new ArrayList<StorageServerStubs>());
-    			m.get(file).add(new StorageServerStubs(client_stub, command_stub));
+    			m.get(file).add(storageServerStubs);
     		}
     	}
     	
-    	return (Path[]) failedToAdd.toArray();
+    	
+    	return failedToAdd.toArray(new Path[0]);
         //throw new UnsupportedOperationException("not implemented");
     }
     
@@ -401,6 +424,8 @@ public class NamingServer implements Service, Registration
 			this.client_stub = client_stub;
 			this.command_stub = command_stub;
 		}
+		
+		
     }
     
     private class Node {
@@ -434,6 +459,7 @@ public class NamingServer implements Service, Registration
         {
             synchronized(NamingServer.this)
             {
+            	stopped = true;
                 NamingServer.this.notifyAll();
             }
         }
@@ -454,8 +480,10 @@ public class NamingServer implements Service, Registration
         protected void stopped(Throwable cause)
         {
             synchronized(NamingServer.this)
-            {
+            { 
+            	stopped = true;
                 NamingServer.this.notifyAll();
+                NamingServer.this.stopped(null);
             }
         }
         
