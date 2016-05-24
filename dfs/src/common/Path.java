@@ -114,22 +114,17 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
     @Override
     public Iterator<String> iterator()
     {
+    	Iterator<String> iter = path.iterator();
         return new Iterator<String>() {
-          
-            int cur = 0;
 
             @Override
             public boolean hasNext() {
-                if (cur < path.size() )
-                    return true;
-                return false;
+            	return iter.hasNext();
             }
 
             @Override
             public String next() {
-                if (cur < path.size() )
-                    return (path.get(cur++));
-                return new String("");
+            	return iter.next();
             }
 
             @Override
