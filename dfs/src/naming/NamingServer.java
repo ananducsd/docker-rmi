@@ -252,17 +252,15 @@ public class NamingServer implements Service, Registration
 				// Already a directory/file of the same name
 				return false;
 			}
-			int i = rand.nextInt(storageServers.size());
+			/*int i = rand.nextInt(storageServers.size());
 			Iterator<StorageServerStubs> iter = storageServers.iterator();
 			for (int j = 0; j < i; iter.next());
 			StorageServerStubs stubs = iter.next();
-			stubs.command_stub.create(directory);
+			stubs.command_stub.create(directory);*/
 			
 			// add to dfs
 			parent.childMap.put(directory.last(), new Node(directory.last(), false));
 		} catch(FileNotFoundException e){
-			throw e;
-		} catch (RMIException e) {
 			throw e;
 		} catch (Exception e) {
 			throw e;
