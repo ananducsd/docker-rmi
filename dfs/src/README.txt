@@ -17,4 +17,6 @@ Email	: sarya@eng.ucsd.edu
 
 ------------------------------------------------------------------------------------
 
+# We are using reference-rmi.jar (provided by the staff) as our rmi implementation. We have edited the makefile to include reference-rmi.jar in the classpath.
+
 

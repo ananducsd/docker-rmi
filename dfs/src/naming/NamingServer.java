@@ -147,6 +147,33 @@ public class NamingServer implements Service, Registration
     }
 
     // The following public methods are documented in Service.java.
+   
+   	 
+    /**
+     * Our implementation of the lock method relies on creating a custom
+   	 * <code>CustomReadWriteLock</code> lock. This lock does not support
+   	 * re-entrancy but merely maintains a counter for readers and writers, and
+   	 * write requests.
+   	 * 
+   	 * The ReadWriteLock has two lock methods and two unlock methods. One lock
+   	 * and unlock method for read access and one lock and unlock for write
+   	 * access.
+   	 * 
+   	 * The protocol for read access is implemented in the lockRead() method. All
+   	 * threads get read access unless there is a thread with write access, or
+   	 * one or more threads have requested write access.
+   	 * 
+   	 * The rules for write access are implemented in the lockWrite() method. A
+   	 * thread that wants write access starts out by requesting write access
+   	 * (writeRequests++). Then it will check if it can actually get write
+   	 * access. A thread can get write access if there are no threads with read
+   	 * access to the resource, and no threads with write access to the resource.
+   	 * 
+     * @param path The path to be locked
+     * @param exclusive if true, Write lock else Read lock
+     * @throws FileNotFoundException
+     * @throws RMIException
+     */
     @Override
     public void lock(Path path, boolean exclusive) throws FileNotFoundException, RMIException
     {

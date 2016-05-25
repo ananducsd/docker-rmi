@@ -234,6 +234,23 @@ public class Path implements Iterable<String>, Comparable<Path>, Serializable
         <code>/etc/dfs/conf.txt</code>, and also gets blocked, because it would
         need to acquire the lock for <code>/etc</code> to do so. The two
         applications are now deadlocked.
+        
+        DESCRIPTION:
+        
+        Hence to avoid deadlocks, we need to impose a total topological ordering
+        on the sequence of lock requests. We equate this ordering to the lexicographical 
+        ordering of absolute path names. A dictionary order also satisfies the requirement
+        that parent directories are locked prior to requesting access to any child 
+        subdirectories or files. Thus, while locking a path object, shared locks are 
+        requested for all the parent objects leading to the path - which satisfies the 
+        lexical order. If well-behaved want simultaneous access to multiple paths, it is 
+        their responsibility to order their access requests using this <code>compareTo</code>
+        method. Thus, in the above example, the first application will request lock on 
+        <code>/bin/cat</code> and not <code>/etc</code>. Whoever gets the lock first on / (root)
+        will win and the operation will go through. The other application will wait to acquire 
+        the lock, and thus deadlock will be avoided. 
+        
+        
         @param other The other path.
         @return Zero if the two paths are equal, a negative number if this path
                 precedes the other path, or a positive number if this path
