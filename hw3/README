@@ -1,0 +1,30 @@
+--------------
+Group Members
+--------------
+
+Name	: Akanksha Maurya
+PID 	: A53087643
+Email 	: amaurya@eng.ucsd.edu
+
+Name	: Fnu Anand
+PID 	: A53081794
+Email 	: a3anand@cs.ucsd.edu
+
+------------------------------------------------------------------------------------
+USAGE: $$ ./run.sh
+
+The run.sh script does the following :
+
+1) Remove any existing images/containers with conflicting names.
+2) Pulls new docker images with linux and hadoop installed. The images are based on 
+kiwenlau/hadoop-cluster-docker hosted on docker.
+3) hadoop-cluster-docker/start-container.sh starts the master and slave nodes. We resize
+the cluster to set the number of slave nodes to 4.
+4) hadoop-cluster-docker/start-hadoop-job.sh starts hadoop on master node and then submits
+the bigram count job.
+
+STRUCTURE:
+
+The 'code' folder contains the Bigram and Word count code. We use file1.txt and file2.txt as input (These are partial texts of the novels 'A Tale of Two Cities' and 'Oliver Twist'). The hadoop-cluster-docker folder contains the docker files for base, master and slave nodes, as well as configuration files related to serf and other settings.
+
+------------------------------------------------------------------------------------
